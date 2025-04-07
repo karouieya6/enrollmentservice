@@ -71,6 +71,13 @@ public class EnrollmentService {
         log.info("🔍 Enrollment check - user: {}, course: {} → enrolled: {}", userId, courseId, enrolled);
         return enrolled;
     }
+    public List<EnrollmentResponse> getAllEnrollments() {
+        List<Enrollment> enrollments = enrollmentRepository.findAll();
+        return enrollments.stream()
+                .map(this::mapToResponse)
+                .toList();
+    }
+
 
     private EnrollmentResponse mapToResponse(Enrollment enrollment) {
         return new EnrollmentResponse(

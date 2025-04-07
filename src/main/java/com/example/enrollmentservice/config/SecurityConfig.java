@@ -34,10 +34,16 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.GET, "/api/enrollments/check").hasAnyRole("STUDENT", "INSTRUCTOR")
 
                         // ✅ Enroll in course - STUDENT and INSTRUCTOR
-                        .requestMatchers(HttpMethod.POST, "/api/enrollments").hasAnyRole("STUDENT", "INSTRUCTOR")
+                        .requestMatchers(HttpMethod.POST, "/api/enrollments").hasRole("STUDENT")
+                        .requestMatchers(HttpMethod.POST, "/api/enrollments").hasRole("INSTRUCTOR")
 
                         // ✅ Unenroll - STUDENT and INSTRUCTOR
                         .requestMatchers(HttpMethod.DELETE, "/api/enrollments/**").hasAnyRole("STUDENT", "INSTRUCTOR")
+                        .requestMatchers(
+                                "/v3/api-docs/**",
+                                "/swagger-ui/**",
+                                "/swagger-ui.html"
+                        ).permitAll()
 
                         // 🔐 Everything else must be authenticated
                         .anyRequest().authenticated()
