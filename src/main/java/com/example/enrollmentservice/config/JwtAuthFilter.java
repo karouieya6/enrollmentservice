@@ -1,7 +1,7 @@
 package com.example.enrollmentservice.config;
 
-import com.example.enrollmentservice.util.JwtUtil;
 import com.example.enrollmentservice.service.TokenBlacklistService;
+import com.example.enrollmentservice.util.JwtUtil;
 import io.jsonwebtoken.Claims;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
@@ -9,13 +9,14 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.userdetails.User;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.userdetails.User;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Collections;
 
 @Component
@@ -30,6 +31,7 @@ public class JwtAuthFilter extends OncePerRequestFilter {
             throws ServletException, IOException {
 
         final String authHeader = request.getHeader("Authorization");
+
         if (authHeader == null || !authHeader.startsWith("Bearer ")) {
             filterChain.doFilter(request, response);
             return;
@@ -47,16 +49,21 @@ public class JwtAuthFilter extends OncePerRequestFilter {
             return;
         }
 
+        // ✅ Extract data from token
         Claims claims = jwtUtil.extractAllClaims(token);
         String username = claims.getSubject();
-        String role = claims.get("role", String.class);
+        ArrayList<String> role = claims.get("roles", ArrayList.class);
+        String roleName = role.get(0);
 
-        // ✅ Build full UserDetails object
-        User userDetails = new User(
-                username,
-                "", // no password required here
-                Collections.singletonList(new SimpleGrantedAuthority("ROLE_" + role))
-        );
+        if (username == null || role == null) {
+            response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Invalid token payload");
+            return;
+        }
+
+        // ✅ Convert role to authority
+        SimpleGrantedAuthority authority = new SimpleGrantedAuthority("ROLE_" + roleName);
+
+        User userDetails = new User(username, "", Collections.singletonList(authority));
 
         UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(
                 userDetails,
@@ -64,11 +71,14 @@ public class JwtAuthFilter extends OncePerRequestFilter {
                 userDetails.getAuthorities()
         );
 
-        System.out.println("✅ Authenticated: " + username);
-        System.out.println("✅ Role: " + role);
+        // ✅ Set the authenticated user in the security context
+        SecurityContextHolder.getContext().setAuthentication(authentication);
+
+        // ✅ Debug logs
+        System.out.println("🧠 Authenticated: " + username);
+        System.out.println("🛡 Role: ROLE_" + role);
         System.out.println("✅ Authorities: " + authentication.getAuthorities());
 
-        SecurityContextHolder.getContext().setAuthentication(authentication);
         filterChain.doFilter(request, response);
     }
 }
