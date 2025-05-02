@@ -3,9 +3,12 @@ package com.example.enrollmentservice.controller;
 import com.example.enrollmentservice.dto.ApiResponse;
 import com.example.enrollmentservice.dto.EnrollmentRequest;
 import com.example.enrollmentservice.dto.EnrollmentResponse;
+import com.example.enrollmentservice.repository.EnrollmentRepository;
 import com.example.enrollmentservice.service.EnrollmentService;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
@@ -20,17 +23,22 @@ import java.util.Map;
 @RequestMapping("/api/enrollments")
 @RequiredArgsConstructor
 public class EnrollmentController {
-
+    @Autowired
+    private EnrollmentRepository enrollmentRepository;
     private final EnrollmentService enrollmentService;
     @Operation(
             summary = "Enroll user in course",
             description = "Enrolls a student or instructor in the specified course. Prevents duplicate enrollments."
     )
     @PostMapping
-    public ResponseEntity<ApiResponse<EnrollmentResponse>> enroll(@RequestBody EnrollmentRequest request) {
-        EnrollmentResponse response = enrollmentService.enrollUser(request);
+    public ResponseEntity<ApiResponse<EnrollmentResponse>> enroll(
+            @RequestBody EnrollmentRequest request,
+            HttpServletRequest httpRequest) {
+
+        EnrollmentResponse response = enrollmentService.enrollUser(request, httpRequest);
         return ResponseEntity.ok(ApiResponse.success(response));
     }
+
     @Operation(
             summary = "Get all enrollments",
             description = "Returns a list of all enrollments. Admin access only."
@@ -46,10 +54,11 @@ public class EnrollmentController {
             description = "Allows a student or instructor to unenroll from a specific course."
     )
     @DeleteMapping
-    public ResponseEntity<Void> unenroll(@RequestBody EnrollmentRequest request) {
-        enrollmentService.unenrollUser(request);
-        return ResponseEntity.noContent().build();
+    public ResponseEntity<?> unenrollUser(@RequestBody EnrollmentRequest request, HttpServletRequest httpRequest) {
+        enrollmentService.unenrollUser(request, httpRequest);
+        return ResponseEntity.ok().build();
     }
+
     @Operation(
             summary = "Get user's enrollments",
             description = "Fetches paginated enrollments for a specific user (student or instructor)."
@@ -76,6 +85,10 @@ public class EnrollmentController {
             @RequestParam Long courseId) {
         boolean isEnrolled = enrollmentService.isUserEnrolled(userId, courseId);
         return ResponseEntity.ok(Map.of("enrolled", isEnrolled));
+    }
+    @GetMapping("/user/{userId}/count")
+    public long countEnrollmentsByUser(@PathVariable Long userId) {
+        return enrollmentRepository.countByUserId(userId);
     }
 
 }
