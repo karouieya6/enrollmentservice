@@ -67,8 +67,8 @@ public class EnrollmentServiceTest {
         EnrollmentResponse result = enrollmentService.enrollUser(request, httpRequest);
 
         assertNotNull(result);
-        assertEquals(1L, result.userId());
-        assertEquals(2L, result.courseId());
+        assertEquals(1L, result.getUserId());
+        assertEquals(2L, result.getCourseId());
     }
 
     @Test
@@ -112,6 +112,6 @@ public class EnrollmentServiceTest {
         List<EnrollmentResponse> result = enrollmentService.getAllEnrollments();
 
         assertEquals(1, result.size());
-        assertEquals(2L, result.get(0).courseId());
+        assertEquals(2L, result.get(0).getCourseId());
     }
 }

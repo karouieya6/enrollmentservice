@@ -141,4 +141,16 @@ public class EnrollmentService {
                 enrollment.getStatus()
         );
     }
+
+    public EnrollmentResponse getEnrollmentById(Long id) {
+        Enrollment enrollment = enrollmentRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Enrollment not found"));
+
+        return EnrollmentResponse.builder()
+                .id(enrollment.getId())
+                .userId(enrollment.getUserId())
+                .courseId(enrollment.getCourseId())
+                .build();
+    }
+
 }

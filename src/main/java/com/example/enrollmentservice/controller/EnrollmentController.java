@@ -90,5 +90,14 @@ public class EnrollmentController {
     public long countEnrollmentsByUser(@PathVariable Long userId) {
         return enrollmentRepository.countByUserId(userId);
     }
+    @Operation(
+            summary = "Get enrollment by ID",
+            description = "Returns enrollment details (userId and courseId) by enrollment ID"
+    )
+    @GetMapping("/{id}")
+    public ResponseEntity<EnrollmentResponse> getEnrollmentById(@PathVariable Long id) {
+        EnrollmentResponse enrollment = enrollmentService.getEnrollmentById(id);
+        return ResponseEntity.ok(enrollment);
+    }
 
 }
